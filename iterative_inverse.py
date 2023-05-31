@@ -8,8 +8,7 @@ def iterative_inverse(hori_y, vert_y, preconditioned=True, tol=1e-7):
     n, m = hori_y.shape[0] - 1, hori_y.shape[1]
 
     if preconditioned:
-
-        M = np.empty(shape=(n+1, m))
+        M = np.empty(shape=(n + 1, m))
         for k in range(m):
             if k - n == 0:
                 M[:, k] = 1 / m**2
@@ -35,7 +34,8 @@ def iterative_inverse(hori_y, vert_y, preconditioned=True, tol=1e-7):
         y = adj_ppfft(hori_y, vert_y).flatten()
 
     operator = LinearOperator(
-        shape=(n**2, n**2), matvec=vec_operator, rmatvec=vec_operator)
+        shape=(n**2, n**2), matvec=vec_operator, rmatvec=vec_operator
+    )
 
     sol_cg, exit_status = cg(operator, y, x0=np.zeros(n**2), tol=tol)
 

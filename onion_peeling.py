@@ -2,7 +2,7 @@ import numpy as np
 
 from pad import pad
 from new_fft import new_fft
-from fast_resampling import fast_compute_alpha
+from fast_resampling import compute_alpha
 
 
 def find_closest(y, n):
@@ -61,7 +61,7 @@ def recover_row_negative(k, vert_ppfft, Id):
     known_samples = np.concatenate((known_I_D_left, known_ppfft, known_I_D_right))
     y = np.concatenate((y_left, y_ppfft, y_right))
 
-    alpha = fast_compute_alpha(y, n, known_samples)
+    alpha = compute_alpha(y, n, known_samples)
 
     res = resample_row(alpha)
 
@@ -94,7 +94,7 @@ def recover_row_positive(k, vert_ppfft, Id):
 
     y = np.concatenate((y_left, y_ppfft, y_right))
 
-    alpha = fast_compute_alpha(y, n, known_samples)
+    alpha = compute_alpha(y, n, known_samples)
 
     res = resample_row(alpha)
 
@@ -138,7 +138,7 @@ def recover_col_negative(k, hori_ppfft, Id):
 
     y = np.concatenate((y_left, y_ppfft, y_right))
 
-    alpha = fast_compute_alpha(y, n, known_samples)
+    alpha = compute_alpha(y, n, known_samples)
 
     res = resample_row(alpha)
 
@@ -171,7 +171,7 @@ def recover_col_positive(k, hori_ppfft, Id):
 
     y = np.concatenate((y_left, y_ppfft, y_right))
 
-    alpha = fast_compute_alpha(y, n, known_samples)
+    alpha = compute_alpha(y, n, known_samples)
 
     res = resample_row(alpha)
 

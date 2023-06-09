@@ -57,7 +57,7 @@ def fast_inverse_Id(Id, toeplitz: InverseToeplitz):
 def precompute_all(n):
     toeplitz_list, nufft_list = precompute_onion_peeling(n)
     toeplitz = precompute_inverse_Id(n)
-    return toeplitz_list, nufft_list, toeplitz_list
+    return toeplitz_list, nufft_list, toeplitz
 
 
 def fast_direct_inversion(hori_ppfft, vert_ppfft, precomputations):

@@ -3,6 +3,7 @@ import numpy as np
 from pad import pad, adj_pad
 from new_fft import adj_new_fft
 from inverse_toeplitz import InverseToeplitz
+from fast_onion_peeling import fast_onion_peeling, precompute_onion_peeling
 
 
 def adj_F_D(y):
@@ -51,3 +52,16 @@ def fast_inverse_Id(Id, toeplitz: InverseToeplitz):
         res[u, :] = toeplitz.apply_inverse(adj_F_D(row))
 
     return res
+
+
+def precompute_all(n):
+    toeplitz_list, nufft_list = precompute_onion_peeling(n)
+    toeplitz = precompute_inverse_Id(n)
+    return toeplitz_list, nufft_list, toeplitz_list
+
+
+def fast_direct_inversion(hori_ppfft, vert_ppfft, precomputations):
+    toeplitz_list, nufft_list, toeplitz = precomputations
+    Id = fast_onion_peeling(hori_ppfft, vert_ppfft, toeplitz_list, nufft_list)
+    sol = fast_inverse_Id(Id, toeplitz)
+    return sol

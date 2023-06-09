@@ -32,4 +32,7 @@ def reconstruction(sino, angles=None, tol=1e-3):
         return direct_inversion(hori_ppfft, vert_ppfft)
 
     else:
-        return iterative_inverse(hori_ppfft, vert_ppfft, tol)[0]
+        res, info = iterative_inverse(hori_ppfft, vert_ppfft, tol)
+        if info != 0:
+            print("WARNING: convergence to tolerance not achieved")
+        return res

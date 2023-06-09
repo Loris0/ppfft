@@ -2,13 +2,18 @@ import numpy as np
 
 from pad import pad
 from new_fft import new_fft
-from fast_resampling import compute_alpha
+from fast_resampling import fast_compute_alpha
 
 
 def find_closest(y, n):
     m = 2 * n + 1
     target = -4 * np.pi * np.arange(-(n // 2), n // 2 + 1) / m
     return np.argmin(np.abs(y[:, None] - target[None, :]), axis=0)
+
+
+def new_find_closest(k, n):
+    l = np.arange(k, -np.sign(k) - k, step=-np.sign(k))
+    return n // 2 + np.rint(-n * l / (2 * k)).astype(int)
 
 
 def initialize(hori_ppfft, vert_ppfft):
@@ -43,6 +48,10 @@ def recover_row_negative(k, vert_ppfft, Id):
     known_ppfft = vert_ppfft[:, 2 * k + n]
     y_ppfft = 8 * np.pi * k * np.arange(-half_n, half_n + 1) / (n * m)
 
+    indices = new_find_closest(k, n)
+    known_ppfft = np.take(known_ppfft, indices)
+    y_ppfft = np.take(y_ppfft, indices)
+
     known_I_D_left = Id[true_k, :true_k]
     y_left = -4 * np.pi * np.arange(-half_n, k) / m
 
@@ -50,14 +59,9 @@ def recover_row_negative(k, vert_ppfft, Id):
     y_right = 4 * np.pi * np.arange(-half_n, k) / m
 
     known_samples = np.concatenate((known_I_D_left, known_ppfft, known_I_D_right))
-
     y = np.concatenate((y_left, y_ppfft, y_right))
 
-    index_to_remove = find_closest(y, n)
-    known_samples = np.take(known_samples, index_to_remove)
-    y = np.take(y, index_to_remove)
-
-    alpha = compute_alpha(y, n, known_samples)
+    alpha = fast_compute_alpha(y, n, known_samples)
 
     res = resample_row(alpha)
 
@@ -76,6 +80,10 @@ def recover_row_positive(k, vert_ppfft, Id):
     known_ppfft = vert_ppfft[:, 2 * k + n]
     y_ppfft = 8 * np.pi * k * np.arange(-half_n, half_n + 1) / (n * m)
 
+    indices = new_find_closest(k, n)
+    known_ppfft = np.take(known_ppfft, indices)
+    y_ppfft = np.take(y_ppfft, indices)
+
     known_I_D_right = Id[true_k, : (n - true_k)][::-1]
     y_left = -4 * np.pi * np.arange(k + 1, half_n + 1) / m
 
@@ -86,11 +94,7 @@ def recover_row_positive(k, vert_ppfft, Id):
 
     y = np.concatenate((y_left, y_ppfft, y_right))
 
-    index_to_remove = find_closest(y, n)
-    known_samples = np.take(known_samples, index_to_remove)
-    y = np.take(y, index_to_remove)
-
-    alpha = compute_alpha(y, n, known_samples)
+    alpha = fast_compute_alpha(y, n, known_samples)
 
     res = resample_row(alpha)
 
@@ -120,6 +124,10 @@ def recover_col_negative(k, hori_ppfft, Id):
     known_ppfft = hori_ppfft[:, 2 * k + n]  # n + 1 elements
     y_ppfft = 8 * np.pi * k * np.arange(-half_n, half_n + 1) / (n * m)
 
+    indices = new_find_closest(k, n)
+    known_ppfft = np.take(known_ppfft, indices)
+    y_ppfft = np.take(y_ppfft, indices)
+
     known_I_D_left = Id[:true_k, true_k]
     y_left = -4 * np.pi * np.arange(-half_n, k) / m
 
@@ -130,11 +138,7 @@ def recover_col_negative(k, hori_ppfft, Id):
 
     y = np.concatenate((y_left, y_ppfft, y_right))
 
-    index_to_remove = find_closest(y, n)
-    known_samples = np.take(known_samples, index_to_remove)
-    y = np.take(y, index_to_remove)
-
-    alpha = compute_alpha(y, n, known_samples)
+    alpha = fast_compute_alpha(y, n, known_samples)
 
     res = resample_row(alpha)
 
@@ -153,6 +157,10 @@ def recover_col_positive(k, hori_ppfft, Id):
     known_ppfft = hori_ppfft[:, 2 * k + n]  # n + 1 elements
     y_ppfft = 8 * np.pi * k * np.arange(-half_n, half_n + 1) / (n * m)
 
+    indices = new_find_closest(k, n)
+    known_ppfft = np.take(known_ppfft, indices)
+    y_ppfft = np.take(y_ppfft, indices)
+
     known_I_D_right = Id[: (n - true_k), true_k][::-1]
     y_left = -4 * np.pi * np.arange(k + 1, half_n + 1) / m
 
@@ -163,11 +171,7 @@ def recover_col_positive(k, hori_ppfft, Id):
 
     y = np.concatenate((y_left, y_ppfft, y_right))
 
-    index_to_remove = find_closest(y, n)
-    known_samples = np.take(known_samples, index_to_remove)
-    y = np.take(y, index_to_remove)
-
-    alpha = compute_alpha(y, n, known_samples)
+    alpha = fast_compute_alpha(y, n, known_samples)
 
     res = resample_row(alpha)
 

@@ -1,8 +1,19 @@
+"""
+This module defines the InverseToeplitz class, used for 
+the fast resampling of trigonometric polynomials.
+"""
+
 import numpy as np
 from scipy.linalg import solve_toeplitz, matmul_toeplitz
 
 
 class InverseToeplitz:
+    """
+    A class for storing a Toeplitz matrix,
+    the Gohberg-Semencul decomposition of its inverse,
+    and use it to apply the inverse to a vector.
+    """
+
     def __init__(self, col, row=None) -> None:
         """
         A Toeplitz matrix T is represented by:
@@ -58,12 +69,16 @@ class InverseToeplitz:
         self.m3 = (y_b, np.zeros_like(y))
         self.m4 = (np.zeros_like(x), x_b)
 
-    def apply_inverse(self, vec):
+    def apply_inverse(self, vec, workers=8):
         """
         Computes T^{-1} @ vec.
         """
-        M1M2_v = matmul_toeplitz(self.m1, matmul_toeplitz(self.m2, vec))
+        M1M2_v = matmul_toeplitz(
+            self.m1, matmul_toeplitz(self.m2, vec, workers), workers
+        )
 
-        M3M4_v = matmul_toeplitz(self.m3, matmul_toeplitz(self.m4, vec))
+        M3M4_v = matmul_toeplitz(
+            self.m3, matmul_toeplitz(self.m4, vec, workers), workers
+        )
 
         return (M1M2_v - M3M4_v) / self.x0

@@ -1,3 +1,8 @@
+"""
+This module provides the implementation of a zero-padding function
+compatible with the alternative definition of the FFT.
+"""
+
 import numpy as np
 
 

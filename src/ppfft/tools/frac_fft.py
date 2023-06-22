@@ -1,3 +1,9 @@
+"""
+This module provides the implementation of the 
+Fractional Fast Fourier Transform and its adjoint,
+when alpha is rational.
+"""
+
 import numpy as np
 
 from ..tools.pad import pad

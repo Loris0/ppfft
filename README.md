@@ -1,48 +1,42 @@
 # ppfft
 
+**ppfft** is a Python library implementing the Pseudo-Polar Fast Fourier Transform, its fast inverse, and the associated tomographic reconstruction pipeline.
+
+## Description
+
+This library is an implementation of [1], with minor variations. It provides:
+- a *fast* forward computation of the Pseudo-Polar Fourier Transform
+- two *fast* inversion methods:
+    - iterative: using a conjugate gradient algorithm
+    - direct: relying on precomputations for fast resamplings of trigonometric polynomials [2]
+- a *fast* tomographic reconstruction algorithm, by interpolating from the polar to the pseudo-polar grid in order to invert the Pseudo-Polar Fourier Transform [3]
+
+where *fast* means $O(n^2 \log(n))$ for an $n$-by-$n$ image.
+
+## Installation
+
+No installation from Pypi yet
+
+## Usage
+
+Example of code here.
+
+## Authors
+
+Loris Megy
 
 
-## Getting started
+## License
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+???
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## References
 
-## Add your files
+[1] Averbuch, A., Coifman, R., Donoho, D., Israeli, M., & Shkolnisky, Y. (2008). A Framework for Discrete Integral Transformations I—The Pseudopolar Fourier Transform. SIAM J. Scientific Computing, 30, 764-784.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+[2] Averbuch, A., Shabat, G., & Shkolnisky, Y. (2015). Direct Inversion of the 3D Pseudo-polar Fourier Transform.
 
-```
-cd existing_repo
-git remote add origin https://gitlab.esrf.fr/megy/ppfft.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.esrf.fr/megy/ppfft/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
+[3] A. Averbuch, R.R. Coifman, D.L. Donoho, M. Elad, & M. Israeli (2006). Fast and accurate Polar Fourier transform. Applied and Computational Harmonic Analysis, 21(2), 145-167.
 
 # Editing this README
 

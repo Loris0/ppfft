@@ -1,3 +1,8 @@
+"""
+This module provides the implementations of
+the alternative definition of the FFT.
+"""
+
 import numpy as np
 
 
@@ -58,4 +63,4 @@ def adj_new_ifft2(a):
     """
     Adjoint operator of ``new_ifft2``.
     """
-    return new_ifft2(a) / np.size(a)
+    return new_fft2(a) / np.size(a)

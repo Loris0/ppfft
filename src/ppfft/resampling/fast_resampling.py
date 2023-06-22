@@ -1,3 +1,7 @@
+"""
+This module contains functions no longer used in the fast implementations.
+"""
+
 import numpy as np
 from scipy.linalg import toeplitz, solve_toeplitz, matmul_toeplitz
 from pynufft import NUFFT

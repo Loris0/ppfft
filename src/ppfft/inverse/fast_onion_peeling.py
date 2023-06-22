@@ -37,12 +37,24 @@ def fast_initialize(hori_ppfft, vert_ppfft):
     return I_d
 
 
-def precompute_onion_peeling(n):
+def precompute_onion_peeling(n, oversampling_factor=5):
     """
     Computes and stores:
     - all the Toeplitz inverses
     - all the Nufft objects
     needed for the onion-peeling algorithm.
+
+    ## Parameters
+    n : int
+        Size of the image to reconstruct.
+    oversampling factor : int
+        Oversampling factor used by NUFFT.
+
+    ## Returns
+    toeplitz_list : list[InverseToeplitz]
+        List of inverses of the Toeplitz matrices.
+    nufft_list : list[NUFFT]
+        List of NUFFT objects.
     """
 
     half_n = n // 2
@@ -66,7 +78,7 @@ def precompute_onion_peeling(n):
         toeplitz_list.append(InverseToeplitz(col=c))
 
         NufftObj = NUFFT()
-        NufftObj.plan(om=-y[:, None], Nd=(n,), Kd=(2 * n,), Jd=(6,))
+        NufftObj.plan(om=-y[:, None], Nd=(n,), Kd=(oversampling_factor * n,), Jd=(6,))
         nufft_list.append(NufftObj)
 
     return toeplitz_list, nufft_list

@@ -1,3 +1,11 @@
+"""
+This module provides the implementation of:
+- the forward horizontal ppfft
+- the forward vertical ppfft
+- the forward ppfft
+- the adjoint ppfft
+"""
+
 import numpy as np
 
 from ..tools.pad import pad, adj_pad

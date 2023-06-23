@@ -9,8 +9,8 @@ This module provides the implementation of:
 import numpy as np
 
 from ..tools.pad import pad, adj_pad
-from ..tools.new_fft import new_fft2, new_ifft, adj_new_fft2, adj_new_ifft
-from ..tools.frac_fft import frac_fft, adj_frac_fft
+from ..tools.new_fft import new_fft, adj_new_fft
+from ..tools.frac_fft import frac_fft_for_ppfft, adj_frac_fft_for_ppfft
 
 
 def ppfft_horizontal(a: np.ndarray) -> np.ndarray:
@@ -28,16 +28,12 @@ def ppfft_horizontal(a: np.ndarray) -> np.ndarray:
     n, _ = a.shape
     m = 2 * n + 1
 
-    res = np.empty((n + 1, m), dtype=np.complex64)
-    Id_hat = new_fft2(pad(a, new_shape=(n, m)))
-    for k in range(m):
-        q = Id_hat[:, k]
-        # frac_ft = frac_fft(pad(new_ifft(q), (m,)), 2 * (k - n), n)[n//2:-n//2]
-        ifft_q = new_ifft(q)
-        pad_ifft_q = pad(ifft_q, (m,))
-        frac_pad_ifft_q = frac_fft(pad_ifft_q, 2 * (k - n), n)
-        adj_pad_frac_ifft_q = adj_pad(frac_pad_ifft_q, (n + 1,))
-        res[:, k] = adj_pad_frac_ifft_q[::-1]
+    res = np.empty((n + 1, m), dtype=complex)
+
+    fft_col = new_fft(pad(a, new_shape=(n, m)))
+    for k, col in enumerate(fft_col.T):
+        alpha = -2 * (k - n) / m
+        res[:, k] = frac_fft_for_ppfft(col, alpha)
 
     return res
 
@@ -78,85 +74,16 @@ def ppfft(a: np.ndarray):
 
 
 def adj_ppfft(hori_ppfft: np.ndarray, vert_ppfft: np.ndarray) -> np.ndarray:
-    """
-    Adjoint operator of ``ppfft``.
-    """
     n, m = hori_ppfft.shape[0] - 1, hori_ppfft.shape[1]
     hori_aux = np.empty(shape=(n, m), dtype=complex)
     vert_aux = np.empty(shape=(n, m), dtype=complex)
 
-    for k in range(m):
-        q = hori_ppfft[::-1, k]
-        q = pad(q, (m,))
-        q = adj_frac_fft(q, 2 * (k - n), n)
-        q = adj_pad(q, (n,))
-        q = adj_new_ifft(q)
-        hori_aux[:, k] = q
+    for k, (col_h, col_v) in enumerate(zip(hori_ppfft.T, vert_ppfft.T)):
+        alpha = -2 * (k - n) / m
+        hori_aux[:, k] = adj_frac_fft_for_ppfft(col_h, alpha)
+        vert_aux[:, k] = adj_frac_fft_for_ppfft(col_v, alpha)
 
-        q = vert_ppfft[::-1, k]
-        q = pad(q, (m,))
-        q = adj_frac_fft(q, 2 * (k - n), n)
-        q = adj_pad(q, (n,))
-        q = adj_new_ifft(q)
-        vert_aux[:, k] = q
+    hori_aux = adj_pad(adj_new_fft(hori_aux), (n, n))
+    vert_aux = adj_pad(adj_new_fft(vert_aux), (n, n))
 
-    hori_aux = adj_new_fft2(hori_aux)
-    hori_a = adj_pad(hori_aux, (n, n))
-
-    vert_aux = adj_new_fft2(vert_aux)
-    vert_a = adj_pad(vert_aux, (n, n))
-    vert_a = np.transpose(vert_a)
-
-    return hori_a + vert_a
-
-
-def horizontal_lines(n: int):
-    """
-    Computes the positions of the basically horizontal lines of the pseudo-polar grid.
-
-    ## Parameters
-    n : int
-        Size of the image whose PPFFT we want to compute.
-
-    ## Returns
-    coords : np.ndarray
-        Array of shape (n+1, 2*n+1, 2). coords[..., 0] gives the x coordinates.
-
-    ## See Also
-    vertical_lines : Return the positions of the basically vertical lines of the pseudo-polar grid.
-    """
-
-    coords = np.empty(shape=(n + 1, 2 * n + 1, 2))
-
-    for l in range(n + 1):
-        for k in range(2 * n + 1):
-            coords[l, k, 0] = -2 * (l - n // 2) * (k - n) / n
-            coords[l, k, 1] = k - n
-
-    return coords
-
-
-def vertical_lines(n: int):
-    """
-    Computes the positions of the basically vertical lines of the pseudo-polar grid.
-
-    ## Parameters
-    n : int
-        Size of the image whose PPFFT we want to compute.
-
-    ## Returns
-    coords : np.ndarray
-        Array of shape (n+1, 2*n+1, 2). coords[..., 0] gives the x coordinates.
-
-    ## See Also
-    horizontal_lines : Return the positions of the basically horizontal lines of the pseudo-polar grid.
-    """
-
-    coords = np.empty(shape=(n + 1, 2 * n + 1, 2))
-
-    for l in range(n + 1):
-        for k in range(2 * n + 1):
-            coords[l, k, 0] = k - n
-            coords[l, k, 1] = -2 * (l - n // 2) * (k - n) / n
-
-    return coords
+    return hori_aux + vert_aux.T

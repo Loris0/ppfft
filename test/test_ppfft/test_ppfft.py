@@ -3,20 +3,21 @@ import pytest
 
 from ppfft.ppfft.ppfft import ppfft_horizontal, ppfft_vertical
 from ppfft.ppfft.ppfft import ppfft, adj_ppfft
+from ppfft.tools.grids import domain
 
 
 def true_ppfft_horizontal(a):
     n, _ = a.shape
     m = 2 * n + 1
 
-    ls = np.arange(-(n // 2), n // 2 + 1)
-    ks = np.arange(-n, n + 1)
+    ls = domain(n + 1)
+    ks = domain(m)
 
     u_coords = -2 * ls[:, None] * ks[None, :] / n
     v_coords = np.tile(ks, (n + 1, 1))
 
-    u = np.arange(-(n // 2), n // 2)
-    v = np.arange(-(n // 2), n // 2)
+    u = domain(n)
+    v = domain(n)
 
     aux_u = np.einsum("u,lk->ulk", u, u_coords)
     aux_v = np.einsum("v,lk->vlk", v, v_coords)
@@ -29,7 +30,7 @@ def true_ppfft_horizontal(a):
     )
 
 
-@pytest.mark.parametrize("n", [100, 102])
+@pytest.mark.parametrize("n", [100, 101])
 def test_ppfft_horizontal(n):
     im = np.random.rand(n, n)
     assert np.allclose(ppfft_horizontal(im), true_ppfft_horizontal(im))
@@ -39,14 +40,14 @@ def true_ppfft_vertical(a):
     n, _ = a.shape
     m = 2 * n + 1
 
-    ls = np.arange(-(n // 2), n // 2 + 1)
-    ks = np.arange(-n, n + 1)
+    ls = domain(n + 1)
+    ks = domain(m)
 
     v_coords = -2 * ls[:, None] * ks[None, :] / n
     u_coords = np.tile(ks, (n + 1, 1))
 
-    u = np.arange(-(n // 2), n // 2)
-    v = np.arange(-(n // 2), n // 2)
+    u = domain(n)
+    v = domain(n)
 
     aux_u = np.einsum("u,lk->ulk", u, u_coords)
     aux_v = np.einsum("v,lk->vlk", v, v_coords)
@@ -59,13 +60,13 @@ def true_ppfft_vertical(a):
     )
 
 
-@pytest.mark.parametrize("n", [100, 102])
+@pytest.mark.parametrize("n", [100, 101])
 def test_ppfft_vertical(n):
     im = np.random.rand(n, n)
     assert np.allclose(ppfft_vertical(im), true_ppfft_vertical(im))
 
 
-@pytest.mark.parametrize("n", [100, 102])
+@pytest.mark.parametrize("n", [100, 101])
 def test_adjoint_ppfft(n):
     im1 = np.random.rand(n, n)
     im2 = np.random.rand(n + 1, 2 * n + 1)

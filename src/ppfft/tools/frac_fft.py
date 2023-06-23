@@ -5,35 +5,67 @@ when alpha is rational.
 """
 
 import numpy as np
-
-from ..tools.pad import pad
-from ..tools.new_fft import new_fft
+from scipy.signal import czt
 
 
-def frac_fft(c: np.ndarray, a: int, b: int, axis=-1):
-    """
-    frac FFT with alpha = a / b
-    """
-    shape = np.shape(c)
-    n = shape[axis]
+def x_right_u_right(x, beta):
+    n = len(x)
+    q_n, _ = divmod(n, 2)
+    x_right = x[q_n:]
+    w = np.exp(-2j * np.pi * beta)
+    return czt(x_right, w=w)
+
+
+def x_right_u_left(x, beta):
+    n = len(x)
+    q_n, _ = divmod(n, 2)
+    x_right = x[q_n:]
+    w = np.exp(2j * np.pi * beta)
+    a = np.exp(-2j * np.pi * beta)
+    return czt(x_right, m=q_n, w=w, a=a)[::-1]
+
+
+def x_left_u_right(x, beta):
+    n = len(x)
     q_n, r_n = divmod(n, 2)
-    m = b * n
-    q_m, r_m = divmod(m, 2)
-
-    aux_shape = list(shape)
-    aux_shape[axis] = m
-    aux_shape = tuple(aux_shape)
-    aux = pad(c, aux_shape)
-
-    indices = (a * np.arange(-q_n, q_n + r_n)) % m  # between 0 and m - 1
-    indices[indices >= q_m + r_m] -= m  # between -m//2 and -1
-    indices += q_m
-
-    return np.take(new_fft(aux, axis), indices, axis=axis)
+    x_left = x[:q_n]
+    u = np.arange(q_n + r_n)
+    w = np.exp(2j * np.pi * beta)
+    return czt(x_left[::-1], m=q_n + r_n, w=w) * np.exp(2j * np.pi * beta * u)
 
 
-def adj_frac_fft(c: np.ndarray, a: int, b: int, axis=-1) -> np.ndarray:
-    """
-    Adjoint operator of ``frac_fft``.
-    """
-    return frac_fft(c, -a, b, axis)
+def x_left_u_left(x, beta):
+    n = len(x)
+    q_n, _ = divmod(n, 2)
+
+    x_left = x[:q_n]
+    u = np.arange(-q_n, 0)
+    w = np.exp(-2j * np.pi * beta)
+    a = np.exp(2j * np.pi * beta)
+    return czt(x_left[::-1], w=w, a=a)[::-1] * np.exp(2j * np.pi * beta * u)
+
+
+def fast_frac_fft(x, beta):
+    left_1 = x_left_u_right(x, beta)
+    left_2 = x_left_u_left(x, beta)
+    right_1 = x_right_u_right(x, beta)
+    right_2 = x_right_u_left(x, beta)
+
+    return np.concatenate((left_2 + right_2, left_1 + right_1))
+
+
+def frac_fft_for_ppfft(x, alpha):
+    n = len(x)
+    if n % 2 == 0:
+        x_pad = np.pad(x, (0, 1))
+    else:
+        x_pad = np.pad(x, (1, 0))
+    return fast_frac_fft(x_pad, alpha / n)
+
+
+def adj_frac_fft_for_ppfft(y, alpha):
+    n = len(y) - 1
+    if n % 2 == 0:
+        return fast_frac_fft(y, -alpha / n)[:-1]
+    else:
+        return fast_frac_fft(y, -alpha / n)[1:]

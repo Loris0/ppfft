@@ -7,8 +7,19 @@ import numpy as np
 
 
 def pad(x: np.ndarray, new_shape: tuple) -> np.ndarray:
-    """
-    Zero-pads the array x in a way that is compatible with ``new_fft`` and ``new_fft2``.
+    """Symmetrical zero-padding of the input.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Input array, n-dimensional.
+    new_shape : tuple[int]
+        Output shape, n-dimensional int tuple.
+
+    Returns
+    -------
+    out : np.ndarray
+        Zero-padded input.
     """
 
     res = np.copy(x)
@@ -35,6 +46,20 @@ def pad(x: np.ndarray, new_shape: tuple) -> np.ndarray:
 
 
 def adj_pad(x: np.ndarray, original_shape: tuple) -> np.ndarray:
+    """Adjoint of `pad`.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        Input array, n-dimensional.
+    original_shape : tuple[int]
+        Output shape, n-dimensional int tuple.
+
+    Returns
+    -------
+    out : np.ndarray
+        Adjoint of `pad` applied to `x`.
+    """
     res = np.copy(x)
     n_dim = res.ndim
 

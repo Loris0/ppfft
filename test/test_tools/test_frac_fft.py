@@ -7,9 +7,13 @@ from ppfft.tools.frac_fft import adj_frac_fft_for_ppfft
 from ppfft.tools.grids import domain
 
 
-def true_fast_frac_fft(x, beta):
+def true_fast_frac_fft(x, beta, m=None):
     n = len(x)
-    us = domain(n)
+    if m is None:
+        us = domain(n)
+    else:
+        us = domain(m)
+
     js = domain(n)
 
     res = []
@@ -19,11 +23,11 @@ def true_fast_frac_fft(x, beta):
     return np.array(res)
 
 
-@pytest.mark.parametrize("n", [100, 101])
-def test_fast_frac_fft(n):
+@pytest.mark.parametrize("n, m", [(100, None), (100, 101), (101, None), (101, 102)])
+def test_fast_frac_fft(n, m):
     x = np.random.rand(n)
     beta = np.random.rand()
-    assert np.allclose(fast_frac_fft(x, beta), true_fast_frac_fft(x, beta))
+    assert np.allclose(fast_frac_fft(x, beta, m), true_fast_frac_fft(x, beta, m))
 
 
 def true_frac_fft_for_ppfft(x, alpha):

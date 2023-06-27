@@ -1,3 +1,8 @@
+"""
+Module for the onion-peeling method.
+It compute I_D from the ppfft.
+"""
+
 import numpy as np
 
 from ..tools.pad import pad
@@ -6,19 +11,59 @@ from ..resampling.inverse_toeplitz import InverseToeplitz
 from pynufft import NUFFT
 
 
-def new_find_closest(k, n):
+def new_find_closest(k: int, n: int) -> np.ndarray:
+    """Point selection for onion-peeling.
+
+    Parameters
+    ----------
+    k : int
+        Step of the onion-peeling method: -n//2 < k < n//2
+    n : int
+        Size of the image to reconstruct.
+
+    Returns
+    -------
+    out : np.ndarray
+        Indices of the points to take.
+    """
     l = np.arange(k, -np.sign(k) - k, step=-np.sign(k))
     return n // 2 + np.rint(-n * l / (2 * k)).astype(int)
 
 
-def resample_row(alpha):
+def resample_row(alpha: np.ndarray) -> np.ndarray:
+    """Resampling of trigonometric polynomial for onion-peeling.
+
+    Parameters
+    ----------
+    alpha : np.ndarray
+        Coefficients of the polynomial.
+
+    Returns
+    -------
+    out : np.ndarray
+        Values of the polynomial at I_D positions.
+    """
     n = len(alpha)
     pad_alpha = pad(alpha, new_shape=(2 * n + 1,))
     fft_alpha = new_fft(pad_alpha)
     return fft_alpha[::2]
 
 
-def fast_initialize(hori_ppfft, vert_ppfft):
+def fast_initialize(hori_ppfft: np.ndarray, vert_ppfft: np.ndarray) -> np.ndarray:
+    """Initialization of I_D.
+
+    Parameters
+    ----------
+    hori_ppfft : np.ndarray
+        Horizontal ppfft.
+    vert_ppfft : np.ndarray
+        Vertical ppfft.
+
+    Returns
+    -------
+    I_D : np.ndarray
+        Initialized I_D.
+    """
     n = hori_ppfft.shape[0] - 1
 
     I_d = np.zeros(shape=(n + 1, n + 1), dtype=complex)
@@ -37,20 +82,21 @@ def fast_initialize(hori_ppfft, vert_ppfft):
     return I_d
 
 
-def precompute_onion_peeling(n, oversampling_factor=5):
-    """
-    Computes and stores:
+def precompute_onion_peeling(n: int, oversampling_factor: int = 5) -> tuple:
+    """Computes and stores:
     - all the Toeplitz inverses
     - all the Nufft objects
     needed for the onion-peeling algorithm.
 
-    ## Parameters
+    Parameters
+    ----------
     n : int
         Size of the image to reconstruct.
     oversampling factor : int
         Oversampling factor used by NUFFT.
 
-    ## Returns
+    Returns
+    -------
     toeplitz_list : list[InverseToeplitz]
         List of inverses of the Toeplitz matrices.
     nufft_list : list[NUFFT]
@@ -87,9 +133,25 @@ def precompute_onion_peeling(n, oversampling_factor=5):
 def fast_recover_row_negative(
     k, indices, vert_ppfft, Id, toeplitz_inv: InverseToeplitz, NufftObj: NUFFT
 ):
-    """
-    Recovers row  -(n//2) < k < 0 of Id.
+    """Recovers row  -(n//2) < k < 0 of Id.
     Id is modified in place.
+
+    Parameters
+    ----------
+    k : int
+        Index of the row to recover. -n//2 < k < 0
+    vert_ppfft : np.ndarray
+        Vertical ppfft.
+    Id : np.ndarray
+        I_D array.
+    toeplitz_inv : InverseToeplitz
+        Inverse of Toeplitz matrix used to resample.
+    NufftObj : NUFFT
+        NUFFT object used to resample.
+
+    Returns
+    -------
+    No output, Id is modified in place.
     """
     n = vert_ppfft.shape[0] - 1
     half_n = n // 2
@@ -115,9 +177,25 @@ def fast_recover_row_negative(
 def fast_recover_row_positive(
     k, indices, vert_ppfft, Id, toeplitz_inv: InverseToeplitz, NufftObj: NUFFT
 ):
-    """
-    Recovers row 0 < k < n//2 of Id.
+    """Recovers row  (n//2) > k > 0 of Id.
     Id is modified in place.
+
+    Parameters
+    ----------
+    k : int
+        Index of the row to recover. n//2 > k > 0
+    vert_ppfft : np.ndarray
+        Vertical ppfft.
+    Id : np.ndarray
+        I_D array.
+    toeplitz_inv : InverseToeplitz
+        Inverse of Toeplitz matrix used to resample.
+    NufftObj : NUFFT
+        NUFFT object used to resample.
+
+    Returns
+    -------
+    No output, Id is modified in place.
     """
     n = vert_ppfft.shape[0] - 1
     half_n = n // 2
@@ -143,9 +221,25 @@ def fast_recover_row_positive(
 def fast_recover_col_negative(
     k, indices, hori_ppfft, Id, toeplitz_inv: InverseToeplitz, NufftObj: NUFFT
 ):
-    """
-    Recovers column -(n//2) < k < 0 of Id.
+    """Recovers row  -(n//2) < k < 0 of Id.
     Id is modified in place.
+
+    Parameters
+    ----------
+    k : int
+        Index of the row to recover. -n//2 < k < 0
+    hori_ppfft : np.ndarray
+        Horizontal ppfft.
+    Id : np.ndarray
+        I_D array.
+    toeplitz_inv : InverseToeplitz
+        Inverse of Toeplitz matrix used to resample.
+    NufftObj : NUFFT
+        NUFFT object used to resample.
+
+    Returns
+    -------
+    No output, Id is modified in place.
     """
     n = hori_ppfft.shape[0] - 1
     half_n = n // 2
@@ -171,9 +265,25 @@ def fast_recover_col_negative(
 def fast_recover_col_positive(
     k, indices, hori_ppfft, Id, toeplitz_inv: InverseToeplitz, NufftObj: NUFFT
 ):
-    """
-    Recovers column 0 < k < n//2 Id.
+    """Recovers row  (n//2) > k > 0 of Id.
     Id is modified in place.
+
+    Parameters
+    ----------
+    k : int
+        Index of the row to recover. n//2 > k > 0
+    hori_ppfft : np.ndarray
+        Horizontal ppfft.
+    Id : np.ndarray
+        I_D array.
+    toeplitz_inv : InverseToeplitz
+        Inverse of Toeplitz matrix used to resample.
+    NufftObj : NUFFT
+        NUFFT object used to resample.
+
+    Returns
+    -------
+    No output, Id is modified in place.
     """
     n = hori_ppfft.shape[0] - 1
     half_n = n // 2
@@ -196,7 +306,30 @@ def fast_recover_col_positive(
     Id[n // 2 + 1 : true_k - n - 1, true_k] = res[n // 2 + 1 : true_k - n - 1]
 
 
-def fast_onion_peeling(hori_ppfft, vert_ppfft, toeplitz_list, nufft_list):
+def fast_onion_peeling(
+    hori_ppfft: np.ndarray,
+    vert_ppfft: np.ndarray,
+    toeplitz_list: list,
+    nufft_list: list,
+) -> np.ndarray:
+    """Fast onion-peeling algorithm.
+
+    Parameters
+    ----------
+    hori_ppfft : np.ndarray
+        Horizontal ppfft.
+    vert_ppfft : np.ndarray
+        Vertical ppfft.
+    toeplitz_list : list[InverseToeplitz]
+        List of all InverseToeplitz needed.
+    nufft_list : list[NUFFT]
+        List of all NUFFT needed.
+
+    Returns
+    -------
+    Id = np.ndarray
+        I_D array.
+    """
     Id = fast_initialize(hori_ppfft, vert_ppfft)
     n = hori_ppfft.shape[0] - 1
     half_n = n // 2

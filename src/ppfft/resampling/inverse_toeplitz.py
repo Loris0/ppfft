@@ -8,15 +8,26 @@ from scipy.linalg import solve_toeplitz, matmul_toeplitz
 
 
 class InverseToeplitz:
-    """
-    A class for storing a Toeplitz matrix,
+    """A class for storing a Toeplitz matrix,
     the Gohberg-Semencul decomposition of its inverse,
     and use it to apply the inverse to a vector.
+
+    Methods
+    -------
+    apply_inverse
     """
 
-    def __init__(self, col, row=None) -> None:
-        """
-        A Toeplitz matrix T is represented by:
+    def __init__(self, col: np.ndarray, row=None) -> None:
+        """A Toeplitz matrix T is represented by:
+
+        Parameters
+        ----------
+        col : np.ndarray
+            First column of T.
+        row : np.ndarray | None
+            First row of T. By default None, meaning row = conj(col)
+
+
         - its first column: col
         - its first row: row
 
@@ -33,10 +44,8 @@ class InverseToeplitz:
 
         self.gohberg_semencul()
 
-    def gohberg_semencul(self):
-        """
-        Compute the Gohberg-Semencul decomposition of T^{-1}
-        """
+    def gohberg_semencul(self) -> None:
+        """Computes the Gohberg-Semencul decomposition of T^{-1}"""
         e0 = np.zeros_like(self.col)
         e0[0] = 1
 
@@ -69,9 +78,20 @@ class InverseToeplitz:
         self.m3 = (y_b, np.zeros_like(y))
         self.m4 = (np.zeros_like(x), x_b)
 
-    def apply_inverse(self, vec, workers=8):
-        """
-        Computes T^{-1} @ vec.
+    def apply_inverse(self, vec: np.ndarray, workers: int = 8) -> np.ndarray:
+        """Computes T^{-1} @ vec using the Gohberg-Semencul formula.
+
+        Parameters
+        ----------
+        vec : np.ndarray
+            Vector to compute the product T^{-1} @ vec.
+        workers : int
+            Workers parameter for scipy.linalg.matmul_toeplitz, by default 8
+
+        Returns
+        -------
+        out : np.ndarray
+            Value of T^{-1} @ vec
         """
         M1M2_v = matmul_toeplitz(
             self.m1, matmul_toeplitz(self.m2, vec, workers), workers

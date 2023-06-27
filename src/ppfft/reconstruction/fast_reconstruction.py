@@ -1,3 +1,7 @@
+"""
+Module allowing to reconstruct an image from its sinogram.
+"""
+
 import numpy as np
 
 from ..tools.pad import pad
@@ -10,11 +14,38 @@ from ..inverse.fast_direct_inverse import fast_direct_inversion
 from ..inverse.iterative_inverse import iterative_inverse
 
 
-def fast_reconstruction(sino, precomputations, interp_mode="1d", angles=None, tol=1e-3):
-    """
-    The angles of the projections are supposed to be equispaced in [-pi/2, pi/2[
-    """
+def fast_reconstruction(
+    sino: np.ndarray,
+    precomputations: tuple,
+    interp_mode="1d",
+    angles: np.ndarray = None,
+    tol=None,
+) -> np.ndarray:
+    """Fast reconstruction of an image from its sinogram.
 
+    Parameters
+    ----------
+    sino : np.ndarray
+        Sinogram. Shape: (n_angles, n)
+    precomputations : tuple
+        Precomputations, output of `precompute_all(n)`.
+    interp_mode : str, optional
+        Interpolation mode, either 1D of direct 2D through scipy. By default "1d"
+    angles : np.ndarray, optional
+        Values of projection angles. By default None = equispaced in [-pi/2, pi/2[
+    tol : float, optional
+       Tolerance of iterative reconstruction. By default None = direct inversion
+
+    Returns
+    -------
+    out : np.ndarray
+        Reconstruction. Complex numbers, take the real part.
+
+    Raises
+    ------
+    ValueError
+        If n_angles is not n or 2n.
+    """
     n_theta, n = sino.shape
 
     pad_sino = pad(sino, (n_theta, 2 * n + 1))

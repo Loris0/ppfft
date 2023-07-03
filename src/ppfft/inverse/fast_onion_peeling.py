@@ -130,10 +130,10 @@ def precompute_onion_peeling(n: int, oversampling_factor: int = 5) -> tuple:
     return toeplitz_list, nufft_list
 
 
-def fast_recover_row_negative(
+def recover_two_rows(
     k, indices, vert_ppfft, Id, toeplitz_inv: InverseToeplitz, NufftObj: NUFFT
 ):
-    """Recovers row  -(n//2) < k < 0 of Id.
+    """Recovers rows k and -k of Id.
     Id is modified in place.
 
     Parameters
@@ -170,58 +170,17 @@ def fast_recover_row_negative(
 
     res = resample_row(alpha)
 
+    # Negative row
     Id[true_k, true_k + 1 : n // 2] = res[true_k + 1 : n // 2]
     Id[true_k, n // 2 + 1 : -true_k - 1] = res[n // 2 + 1 : -true_k - 1]
+    # Positive row
+    Id[-1 - true_k] = np.conjugate(Id[true_k, ::-1])
 
 
-def fast_recover_row_positive(
-    k, indices, vert_ppfft, Id, toeplitz_inv: InverseToeplitz, NufftObj: NUFFT
-):
-    """Recovers row  (n//2) > k > 0 of Id.
-    Id is modified in place.
-
-    Parameters
-    ----------
-    k : int
-        Index of the row to recover. n//2 > k > 0
-    vert_ppfft : np.ndarray
-        Vertical ppfft.
-    Id : np.ndarray
-        I_D array.
-    toeplitz_inv : InverseToeplitz
-        Inverse of Toeplitz matrix used to resample.
-    NufftObj : NUFFT
-        NUFFT object used to resample.
-
-    Returns
-    -------
-    No output, Id is modified in place.
-    """
-    n = vert_ppfft.shape[0] - 1
-    half_n = n // 2
-    true_k = k + half_n
-
-    known_ppfft = vert_ppfft[:, 2 * k + n]
-    known_ppfft = np.take(known_ppfft, indices)
-
-    known_I_D_pos = Id[true_k, : (n - true_k)]
-
-    known_I_D_neg = Id[true_k, (true_k - n) :]
-
-    known_samples = np.concatenate((known_I_D_pos, known_ppfft[::-1], known_I_D_neg))
-
-    alpha = toeplitz_inv.apply_inverse(NufftObj.Kd * NufftObj.adjoint(known_samples))
-
-    res = resample_row(alpha)
-
-    Id[true_k, (n - true_k) + 1 : n // 2] = res[(n - true_k) + 1 : n // 2]
-    Id[true_k, n // 2 + 1 : true_k - n - 1] = res[n // 2 + 1 : true_k - n - 1]
-
-
-def fast_recover_col_negative(
+def recover_two_cols(
     k, indices, hori_ppfft, Id, toeplitz_inv: InverseToeplitz, NufftObj: NUFFT
 ):
-    """Recovers row  -(n//2) < k < 0 of Id.
+    """Recovers columns k and -k of Id.
     Id is modified in place.
 
     Parameters
@@ -258,60 +217,14 @@ def fast_recover_col_negative(
 
     res = resample_row(alpha)
 
+    # Negative column
     Id[true_k + 1 : n // 2, true_k] = res[true_k + 1 : n // 2]
     Id[n // 2 + 1 : -true_k - 1, true_k] = res[n // 2 + 1 : -true_k - 1]
+    # Positive column
+    Id[:, -1 - true_k] = np.conjugate(Id[::-1, true_k])
 
 
-def fast_recover_col_positive(
-    k, indices, hori_ppfft, Id, toeplitz_inv: InverseToeplitz, NufftObj: NUFFT
-):
-    """Recovers row  (n//2) > k > 0 of Id.
-    Id is modified in place.
-
-    Parameters
-    ----------
-    k : int
-        Index of the row to recover. n//2 > k > 0
-    hori_ppfft : np.ndarray
-        Horizontal ppfft.
-    Id : np.ndarray
-        I_D array.
-    toeplitz_inv : InverseToeplitz
-        Inverse of Toeplitz matrix used to resample.
-    NufftObj : NUFFT
-        NUFFT object used to resample.
-
-    Returns
-    -------
-    No output, Id is modified in place.
-    """
-    n = hori_ppfft.shape[0] - 1
-    half_n = n // 2
-    true_k = k + half_n
-
-    known_ppfft = hori_ppfft[:, 2 * k + n]  # n + 1 elements
-    known_ppfft = np.take(known_ppfft, indices)
-
-    known_I_D_pos = Id[: (n - true_k), true_k]
-
-    known_I_D_neg = Id[(true_k - n) :, true_k]
-
-    known_samples = np.concatenate((known_I_D_pos, known_ppfft[::-1], known_I_D_neg))
-
-    alpha = toeplitz_inv.apply_inverse(NufftObj.Kd * NufftObj.adjoint(known_samples))
-
-    res = resample_row(alpha)
-
-    Id[(n - true_k) + 1 : n // 2, true_k] = res[(n - true_k) + 1 : n // 2]
-    Id[n // 2 + 1 : true_k - n - 1, true_k] = res[n // 2 + 1 : true_k - n - 1]
-
-
-def fast_onion_peeling(
-    hori_ppfft: np.ndarray,
-    vert_ppfft: np.ndarray,
-    toeplitz_list: list,
-    nufft_list: list,
-) -> np.ndarray:
+def fast_onion_peeling(hori_ppfft, vert_ppfft, toeplitz_list, nufft_list):
     """Fast onion-peeling algorithm.
 
     Parameters
@@ -339,10 +252,7 @@ def fast_onion_peeling(
     ):
         indices = new_find_closest(k, n)  # we could precompute this
 
-        fast_recover_row_negative(k, indices, vert_ppfft, Id, toeplitz_inv, NufftObj)
-        fast_recover_row_positive(-k, indices, vert_ppfft, Id, toeplitz_inv, NufftObj)
-
-        fast_recover_col_negative(k, indices, hori_ppfft, Id, toeplitz_inv, NufftObj)
-        fast_recover_col_positive(-k, indices, hori_ppfft, Id, toeplitz_inv, NufftObj)
+        recover_two_rows(k, indices, vert_ppfft, Id, toeplitz_inv, NufftObj)
+        recover_two_cols(k, indices, hori_ppfft, Id, toeplitz_inv, NufftObj)
 
     return Id

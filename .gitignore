@@ -1,0 +1,6 @@
+profiling/
+.vscode/
+dist/
+my_version/
+*.egg-info/
+__pycache__/

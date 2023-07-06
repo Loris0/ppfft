@@ -68,7 +68,12 @@ def initialize_I_hat(hori_ppfft, vert_ppfft):
 
 
 def compute_rows(
-    k, I_hat, vert_ppfft_samples, toeplitz_inv: InverseToeplitz, NufftObj: NUFFT
+    k,
+    I_hat,
+    vert_ppfft_samples,
+    toeplitz_inv: InverseToeplitz,
+    NufftObj: NUFFT,
+    workers: int = None,
 ):
     """
     -n//2 < k < 0
@@ -81,7 +86,9 @@ def compute_rows(
 
     known_samples = np.concatenate((I_hat_pos, vert_ppfft_samples, I_hat_neg))
 
-    alpha = toeplitz_inv.apply_inverse(NufftObj.Kd * NufftObj.adjoint(known_samples))
+    alpha = toeplitz_inv.apply_inverse(
+        NufftObj.Kd * NufftObj.adjoint(known_samples), workers=workers
+    )
 
     res = new_fft(pad(alpha, (n + 1,)))
 
@@ -95,7 +102,12 @@ def compute_rows(
 
 
 def compute_cols(
-    k, I_hat, hori_ppfft_samples, toeplitz_inv: InverseToeplitz, NufftObj: NUFFT
+    k,
+    I_hat,
+    hori_ppfft_samples,
+    toeplitz_inv: InverseToeplitz,
+    NufftObj: NUFFT,
+    workers: int = None,
 ):
     """
     -(n//2) < k < 0
@@ -108,7 +120,9 @@ def compute_cols(
 
     known_samples = np.concatenate((I_hat_pos, hori_ppfft_samples, I_hat_neg))
 
-    alpha = toeplitz_inv.apply_inverse(NufftObj.Kd * NufftObj.adjoint(known_samples))
+    alpha = toeplitz_inv.apply_inverse(
+        NufftObj.Kd * NufftObj.adjoint(known_samples), workers=workers
+    )
 
     res = new_fft(pad(alpha, (n + 1,)))
 
@@ -121,14 +135,16 @@ def compute_cols(
     return alpha
 
 
-def new_onion_peeling(hori_ppfft, vert_ppfft, toeplitz_list, nufft_list):
+def new_onion_peeling(
+    hori_ppfft, vert_ppfft, toeplitz_list, nufft_list, workers: int = None
+):
     I_hat = initialize_I_hat(hori_ppfft, vert_ppfft)
     n = hori_ppfft.shape[0] - 1
 
     fft_col = np.zeros(shape=(n + 1, n), dtype=complex)
-    fft_col[0, :] = new_ifft(I_hat[0])[:-1]
+    fft_col[0, :] = new_ifft(I_hat[0], workers=workers)[:-1]
     fft_col[-1, :] = np.conjugate(fft_col[0, :])
-    fft_col[n // 2, :] = new_ifft(I_hat[n // 2])[:-1]
+    fft_col[n // 2, :] = new_ifft(I_hat[n // 2], workers=workers)[:-1]
 
     for toeplitz_inv, NufftObj, k in zip(
         toeplitz_list, nufft_list, range(-(n // 2) + 1, 0)
@@ -138,10 +154,12 @@ def new_onion_peeling(hori_ppfft, vert_ppfft, toeplitz_list, nufft_list):
         hori_ppfft_samples = np.take(hori_ppfft[k + n // 2], indices)
 
         fft_col[k + n // 2, :] = compute_rows(
-            k, I_hat, vert_ppfft_samples, toeplitz_inv, NufftObj
+            k, I_hat, vert_ppfft_samples, toeplitz_inv, NufftObj, workers=workers
         )
         fft_col[-(k + n // 2) - 1, :] = np.conjugate(fft_col[k + n // 2, :])
 
-        compute_cols(k, I_hat, hori_ppfft_samples, toeplitz_inv, NufftObj)
+        compute_cols(
+            k, I_hat, hori_ppfft_samples, toeplitz_inv, NufftObj, workers=workers
+        )
 
     return fft_col

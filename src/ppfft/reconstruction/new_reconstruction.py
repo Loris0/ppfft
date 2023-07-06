@@ -14,6 +14,7 @@ def new_reconstruction(
     thetas: np.ndarray,
     precomputations: tuple,
     oversampling: int = None,
+    workers: int = None,
 ) -> np.ndarray:
     """Tomographic reconstruction from sinogram.
 
@@ -27,6 +28,8 @@ def new_reconstruction(
         Output of `precompute_onion_peeling(n)`.
     oversampling : int, optional
         Radial size of zero-padded sinogram, by default None: means 2 * n.
+    workers: int, optional
+        Maximum number of workers to use for parallel computation. If negative, takes the value `os.cpu_count()`.
 
     Returns
     -------
@@ -44,7 +47,7 @@ def new_reconstruction(
         new_n = oversampling
 
     pad_sino = pad(sino, (n_theta, new_n))
-    fft_sinogram = new_fft(pad_sino)  # polar samples
+    fft_sinogram = new_fft(pad_sino, workers=workers)  # polar samples
 
     # Interpolation polar -> pseudo-polar
     polar_x, polar_y = polar_grid(
@@ -53,4 +56,4 @@ def new_reconstruction(
 
     hori, vert = new_direct_2d_interp(fft_sinogram, polar_x, polar_y, n)
 
-    return new_direct_inversion(hori, vert, precomputations)
+    return new_direct_inversion(hori, vert, precomputations, workers=workers)

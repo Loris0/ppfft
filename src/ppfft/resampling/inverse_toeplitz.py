@@ -25,9 +25,8 @@ class InverseToeplitz:
         ----------
         col : np.ndarray
             First column of T.
-        row : np.ndarray | None
+        row : np.ndarray, optional
             First row of T. By default None, meaning row = conj(col)
-
         """
         self.col = col
         self.row = row
@@ -74,15 +73,15 @@ class InverseToeplitz:
 
         self.x0 = x[0]
 
-    def apply_inverse(self, x: np.ndarray) -> np.ndarray:
+    def apply_inverse(self, x: np.ndarray, workers: int = None) -> np.ndarray:
         """Computes T^{-1} @ vec using the Gohberg-Semencul formula.
 
         Parameters
         ----------
         x : np.ndarray
             Vector to compute the product T^{-1} @ x.
-        workers : int
-            Workers parameter for scipy.linalg.matmul_toeplitz, by default 8
+        workers: int, optional
+            Maximum number of workers to use for parallel computation. If negative, takes the value `os.cpu_count()`.
 
         Returns
         -------
@@ -90,14 +89,15 @@ class InverseToeplitz:
             Value of T^{-1} @ x
         """
 
-        fft_x = fft.fft(x, n=2 * self.n - 1)
+        fft_x = fft.fft(x, n=2 * self.n - 1, workers=workers)
 
-        m2_x = fft.ifft(self.fft_m2 * fft_x)[-self.n :]
-        m4_x = fft.ifft(self.fft_m4 * fft_x)[-self.n :]
+        m2_x = fft.ifft(self.fft_m2 * fft_x, workers=workers)[-self.n :]
+        m4_x = fft.ifft(self.fft_m4 * fft_x, workers=workers)[-self.n :]
 
         res = fft.ifft(
-            self.fft_m1 * fft.fft(m2_x, n=2 * self.n - 1)
-            - self.fft_m3 * fft.fft(m4_x, n=2 * self.n - 1)
+            self.fft_m1 * fft.fft(m2_x, n=2 * self.n - 1, workers=workers)
+            - self.fft_m3 * fft.fft(m4_x, n=2 * self.n - 1, workers=workers),
+            workers=workers,
         )[-self.n :]
 
         return res / self.x0

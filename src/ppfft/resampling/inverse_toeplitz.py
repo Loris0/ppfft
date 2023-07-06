@@ -4,6 +4,7 @@ the fast resampling of trigonometric polynomials.
 """
 
 import numpy as np
+import scipy.fft as fft
 from scipy.linalg import solve_toeplitz
 
 
@@ -18,7 +19,7 @@ class InverseToeplitz:
     """
 
     def __init__(self, col: np.ndarray, row=None) -> None:
-        """Constructor of the class.:
+        """Constructor of the class.
 
         Parameters
         ----------
@@ -59,17 +60,17 @@ class InverseToeplitz:
             x = solve_toeplitz((self.col, self.row), e0)
             y = solve_toeplitz((self.col, self.row), e1)
 
-        self.fft_m1 = np.fft.fft(np.concatenate((np.zeros(self.n - 1), x)))
+        self.fft_m1 = fft.fft(np.concatenate((np.zeros(self.n - 1), x)))
 
-        self.fft_m4 = np.fft.fft(np.concatenate((x[1:], np.zeros(self.n))))
+        self.fft_m4 = fft.fft(np.concatenate((x[1:], np.zeros(self.n))))
 
         col_m2 = np.zeros_like(y)
         col_m2[0] = y[-1]
-        self.fft_m2 = np.fft.fft(np.concatenate((y[:-1], col_m2)))
+        self.fft_m2 = fft.fft(np.concatenate((y[:-1], col_m2)))
 
         col_m3 = np.zeros_like(y)
         col_m3[1::] = y[:-1]
-        self.fft_m3 = np.fft.fft(np.concatenate((np.zeros(self.n - 1), col_m3)))
+        self.fft_m3 = fft.fft(np.concatenate((np.zeros(self.n - 1), col_m3)))
 
         self.x0 = x[0]
 
@@ -89,14 +90,14 @@ class InverseToeplitz:
             Value of T^{-1} @ x
         """
 
-        fft_x = np.fft.fft(x, n=2 * self.n - 1)
+        fft_x = fft.fft(x, n=2 * self.n - 1)
 
-        m2_x = np.fft.ifft(self.fft_m2 * fft_x)[-self.n :]
-        m4_x = np.fft.ifft(self.fft_m4 * fft_x)[-self.n :]
+        m2_x = fft.ifft(self.fft_m2 * fft_x)[-self.n :]
+        m4_x = fft.ifft(self.fft_m4 * fft_x)[-self.n :]
 
-        res = np.fft.ifft(
-            self.fft_m1 * np.fft.fft(m2_x, n=2 * self.n - 1)
-            - self.fft_m3 * np.fft.fft(m4_x, n=2 * self.n - 1)
+        res = fft.ifft(
+            self.fft_m1 * fft.fft(m2_x, n=2 * self.n - 1)
+            - self.fft_m3 * fft.fft(m4_x, n=2 * self.n - 1)
         )[-self.n :]
 
         return res / self.x0

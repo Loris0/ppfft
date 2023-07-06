@@ -5,36 +5,24 @@ from ppfft.tools.grids import domain
 
 
 def horizontal_grid(n: int) -> np.ndarray:
-    coords = np.empty(shape=(n + 1, n + 1, 2))
-
-    for i_l, l in enumerate(domain(n + 1)):
-        for i_k, k in enumerate(domain(n + 1)):
-            coords[i_k, i_l, 0] = -2 * l * k / (n * (n + 1))
-            coords[i_k, i_l, 1] = k / (n + 1)
-
-    return coords
+    dom = domain(n + 1)
+    horizontal_x = -2 * dom[None, :] * dom[:, None] / (n * (n + 1))
+    horizontal_y = np.tile(dom[:, None], (1, n + 1)) / (n + 1)
+    return horizontal_x, horizontal_y
 
 
 def vertical_grid(n: int) -> np.ndarray:
-    coords = np.empty(shape=(n + 1, n + 1, 2))
-
-    for i_l, l in enumerate(domain(n + 1)):
-        for i_k, k in enumerate(domain(n + 1)):
-            coords[i_k, i_l, 0] = k / (n + 1)
-            coords[i_k, i_l, 1] = -2 * l * k / (n * (n + 1))
-
-    return coords
+    horizontal_x, horizontal_y = horizontal_grid(n)
+    return horizontal_y, horizontal_x
 
 
 def polar_grid(thetas, n_r):
-    n_theta = len(thetas)
     rs = domain(n_r) / n_r
-    coords = np.empty(shape=(n_theta, n_r, 2))
 
-    coords[..., 0] = np.cos(thetas)[:, None] * rs[None, :]
-    coords[..., 1] = np.sin(thetas)[:, None] * rs[None, :]
+    polar_x = np.cos(thetas)[:, None] * rs[None, :]
+    polar_y = np.sin(thetas)[:, None] * rs[None, :]
 
-    return coords
+    return polar_x, polar_y
 
 
 def new_direct_2d_interp(
@@ -64,10 +52,9 @@ def new_direct_2d_interp(
     points = np.stack((polar_x.flatten(), polar_y.flatten()), axis=-1)
     interpolator = interp_fun(points, polar_ft.flatten(), fill_value=0)
 
-    hori_pos = horizontal_grid(n)
-    vert_pos = vertical_grid(n)
+    hori_x, hori_y = horizontal_grid(n)
 
-    hori_ppfft = interpolator(hori_pos[..., 0], hori_pos[..., 1])
-    vert_ppfft = interpolator(vert_pos[..., 0], vert_pos[..., 1])
+    hori_ppfft = interpolator(hori_x, hori_y)
+    vert_ppfft = interpolator(hori_y, hori_x)
 
     return hori_ppfft, vert_ppfft

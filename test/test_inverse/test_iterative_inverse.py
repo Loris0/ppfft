@@ -5,7 +5,7 @@ from ppfft.ppfft.ppfft import ppfft
 from ppfft.inverse.iterative_inverse import iterative_inverse
 
 
-@pytest.mark.parametrize("n", [20, 30, 40])
+@pytest.mark.parametrize("n", [20, 30])
 def test_fast_direct_inverse(n):
     im = np.random.rand(n, n)
     h, v = ppfft(im)

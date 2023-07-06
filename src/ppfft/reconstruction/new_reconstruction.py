@@ -47,10 +47,10 @@ def new_reconstruction(
     fft_sinogram = new_fft(pad_sino)  # polar samples
 
     # Interpolation polar -> pseudo-polar
-    pol_grid = polar_grid(
+    polar_x, polar_y = polar_grid(
         np.pi / 2 + thetas, new_n
     )  # pi / 2 is here because of the convention of silx Projection.
-    polar_x, polar_y = pol_grid[..., 0], pol_grid[..., 1]
+
     hori, vert = new_direct_2d_interp(fft_sinogram, polar_x, polar_y, n)
 
     return new_direct_inversion(hori, vert, precomputations)

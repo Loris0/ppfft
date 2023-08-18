@@ -4,7 +4,7 @@ import numpy as np
 from ppfft.tools.pad import pad
 from ppfft.tools.new_fft import new_fft2
 from ppfft.ppfft.ppfft import ppfft
-from ppfft.inverse.onion_peeling import onion_peeling
+from ppfft.inverse.onion_peeling import precompute_onion_peeling, onion_peeling
 
 
 def compute_true_Id(im):

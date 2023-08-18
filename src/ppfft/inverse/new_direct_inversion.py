@@ -1,10 +1,13 @@
-from ppfft.inverse.new_onion_peeling import new_onion_peeling, precompute_onion_peeling
-from ppfft.tools.new_fft import new_ifft
+import numpy as np
+import scipy.fft as fft
+
+from .new_onion_peeling import new_onion_peeling
 
 
 def new_direct_inversion(hori_ppfft, vert_ppfft, precomputations, workers: int = None):
     toeplitz_list, nufft_list = precomputations
-    fft_col = new_onion_peeling(
-        hori_ppfft, vert_ppfft, toeplitz_list, nufft_list, workers=workers
+    n = np.shape(hori_ppfft)[1] - 1
+    fft_row = new_onion_peeling(
+        hori_ppfft, vert_ppfft, toeplitz_list, nufft_list, workers
     )
-    return new_ifft(fft_col, axis=0, workers=workers)[:-1].real
+    return fft.irfft(fft_row, n=n + 1, workers=workers)[:, :-1]

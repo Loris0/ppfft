@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from ppfft.inverse.new_onion_peeling import (
+from ppfft.inverse.onion_peeling import (
     new_onion_peeling,
     precompute_onion_peeling,
 )

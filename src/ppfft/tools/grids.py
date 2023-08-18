@@ -77,3 +77,23 @@ def vertical_lines(n: int) -> np.ndarray:
             coords[i_l, i_k, 1] = -2 * l * k / n
 
     return coords
+
+
+def half_horizontal_grid(n: int) -> np.ndarray:
+    ks = np.arange(0, n // 2 + 1)
+    ls = np.arange(-(n // 2), n // 2 + 1)
+    horizontal_x = -2 * ks[:, None] * ls[None, :] / (n * (n + 1))
+    horizontal_y = np.tile(ks[:, None], (1, n + 1)) / (n + 1)
+    return horizontal_x, horizontal_y
+
+
+def polar_grid(thetas, n_r):
+    """
+    n_r should be odd
+    """
+    rs = domain(n_r) / n_r
+
+    polar_x = np.cos(thetas)[:, None] * rs[None, :]
+    polar_y = np.sin(thetas)[:, None] * rs[None, :]
+
+    return polar_x, polar_y

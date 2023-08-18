@@ -1,37 +1,57 @@
 import numpy as np
 
-from ..tools.pad import pad
-from ..tools.new_fft import new_fft
-from ..reconstruction.polar_to_pp import direct_2d_interp
-from ..inverse.direct_inverse import direct_inversion
-from ..inverse.iterative_inverse import iterative_inverse
+from ppfft.reconstruction.polar_to_pp import polar_grid, direct_2d_interp
+from ppfft.inverse.direct_inversion import direct_inversion
+
+from ppfft.tools.new_fft import new_fft
+from ppfft.tools.pad import pad
 
 
-def reconstruction(sino, angles=None, tol=1e-3):
+def reconstruction(
+    sino: np.ndarray,
+    thetas: np.ndarray,
+    precomputations: tuple,
+    oversampling: int = None,
+    workers: int = None,
+) -> np.ndarray:
+    """Tomographic reconstruction from sinogram.
+
+    Parameters
+    ----------
+    sino : np.ndarray
+        Sinogram. Shape: (n_theta, n).
+    thetas : np.ndarray
+        Angles of the projections (argument of `silx.image.Projection`).
+    precomputations : tuple
+        Output of `precompute_onion_peeling(n)`.
+    oversampling : int, optional
+        Radial size of zero-padded sinogram, by default None: means 2 * n.
+    workers: int, optional
+        Maximum number of workers to use for parallel computation. If negative, takes the value `os.cpu_count()`.
+
+    Returns
+    -------
+    np.ndarray
+        Reconstructed image. Shape: (n, n)
     """
-    The angles of the projections are supposed to be equispaced in [-pi/2, pi/2[
-    """
-
     n_theta, n = sino.shape
 
-    pad_sino = pad(sino, (n_theta, 2 * n + 1))
-    fft_sinogram = new_fft(pad_sino)
-
-    if angles is None:
-        angles = np.linspace(-np.pi / 2, np.pi / 2, num=n_theta, endpoint=False)
-
-    p = np.arange(-n, n + 1)
-
-    x_polar = p[None, :] * np.cos(np.pi / 2 + angles)[:, None]
-    y_polar = p[None, :] * np.sin(np.pi / 2 + angles)[:, None]
-
-    hori_ppfft, vert_ppfft = direct_2d_interp(fft_sinogram, x_polar, y_polar, n)
-
-    if tol is None:
-        return direct_inversion(hori_ppfft, vert_ppfft)
-
+    # The sinogram is zero-padded in the radial direction.
+    # This improves the interpolation.
+    # By default, we pad from size n to size 2 * n.
+    if oversampling is None:
+        new_n = 2 * n
     else:
-        res, info = iterative_inverse(hori_ppfft, vert_ppfft, tol)
-        if info != 0:
-            print("WARNING: convergence to tolerance not achieved")
-        return res
+        new_n = oversampling
+
+    pad_sino = pad(sino, (n_theta, new_n))
+    fft_sinogram = new_fft(pad_sino, workers=workers)  # polar samples
+
+    # Interpolation polar -> pseudo-polar
+    polar_x, polar_y = polar_grid(
+        np.pi / 2 + thetas, new_n
+    )  # pi / 2 is here because of the convention of silx Projection.
+
+    hori, vert = direct_2d_interp(fft_sinogram, polar_x, polar_y, n)
+
+    return direct_inversion(hori, vert, precomputations, workers=workers)

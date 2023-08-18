@@ -8,34 +8,23 @@ This module provides the implementation of:
 
 import numpy as np
 
+from ..tools.grids import domain
 from ..tools.pad import pad, adj_pad
 from ..tools.new_fft import new_fft, adj_new_fft
-from ..tools.frac_fft import frac_fft_for_ppfft, adj_frac_fft_for_ppfft
+from ..tools.frac_fft import fast_frac_fft, adj_frac_fft_for_ppfft
 
 
 def ppfft_horizontal(a: np.ndarray) -> np.ndarray:
-    """Pseudo-Polar Fast Fourier Transform on the basically horizontal lines.
-
-    Parameters
-    ----------
-    a : np.ndarray
-        Input array of shape (n, n).
-
-    Returns
-    -------
-    y : np.ndarray
-        Ouput array of shape (n+1, 2n+1).
-    """
     n, _ = a.shape
-    m = 2 * n + 1
 
-    res = np.empty((n + 1, m), dtype=complex)
+    res = np.empty((n + 1, n + 1), dtype=complex)
 
-    fft_col = new_fft(pad(a, new_shape=(n, m)))
-    for k, col in enumerate(fft_col.T):
-        alpha = -2 * (k - n) / m
-        res[:, k] = frac_fft_for_ppfft(col, alpha)
+    # 1D FFT of each zero-padded line. Shape = (n, m)
+    fft_col = new_fft(pad(a, new_shape=(n, n + 1)), axis=-1)
 
+    # Frac FFT on each col
+    for k, col in zip(domain(n + 1), fft_col.T):
+        res[k + n // 2, :] = fast_frac_fft(col, beta=-2 * k / (n * (n + 1)), m=n + 1)
     return res
 
 

@@ -45,6 +45,23 @@ def fast_frac_fft(x: np.ndarray, beta: float, m=None) -> np.ndarray:
         return w_powers_m * matmul_toeplitz((c, r), w_powers_n * x)
 
 
+def new_fast_frac_fft(x: np.ndarray, beta: float, m=None) -> np.ndarray:
+    n = len(x)
+    w = np.exp(-2j * np.pi * beta)
+    dom_in = np.arange(n)
+    # Output size is the same as input.
+    if m is None:
+        dom_out = domain(n)
+    # Output size given by m.
+    else:
+        dom_out = domain(m)
+    w_powers_in = w ** (0.5 * dom_in**2)
+    w_powers_out = w ** (0.5 * dom_out**2)
+    c = w ** (-0.5 * (dom_out - dom_in[0]) ** 2)
+    r = w ** (-0.5 * (dom_in - dom_out[0]) ** 2)
+    return w_powers_out * matmul_toeplitz((c, r), w_powers_in * x)
+
+
 def frac_fft_for_ppfft(x: np.ndarray, alpha: float) -> np.ndarray:
     """Variant of FracFFT used in `ppfft`.
 

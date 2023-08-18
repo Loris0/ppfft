@@ -1,22 +1,19 @@
 import numpy as np
+import scipy.fft as fft
 
-from ppfft.tools.frac_fft import fast_frac_fft
-from ppfft.tools.grids import domain
-from ppfft.tools.new_fft import new_fft
-from ppfft.tools.pad import pad
+from ppfft.tools.frac_fft import new_fast_frac_fft
 
 
 def new_ppfft_horizontal(a: np.ndarray) -> np.ndarray:
     n, _ = a.shape
 
-    res = np.empty((n + 1, n + 1), dtype=complex)
+    res = np.empty((1 + n // 2, n + 1), dtype=complex)
 
-    # 1D FFT of each zero-padded line. Shape = (n, m)
-    fft_col = new_fft(pad(a, new_shape=(n, n + 1)), axis=-1)
-
+    # 1D FFT of each zero-padded line. Shape = (n, n + 1)
+    fft_col = fft.fft(a, n=n + 1, axis=-1)[:, : 1 + n // 2]
     # Frac FFT on each col
-    for k, col in zip(domain(n + 1), fft_col.T):
-        res[k + n // 2, :] = fast_frac_fft(col, beta=-2 * k / (n * (n + 1)), m=n + 1)
+    for k, col in enumerate(fft_col.T):
+        res[k, :] = new_fast_frac_fft(col, beta=-2 * k / (n * (n + 1)), m=n + 1)
     return res
 
 

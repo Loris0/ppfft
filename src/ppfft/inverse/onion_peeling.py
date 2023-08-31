@@ -1,7 +1,7 @@
 import numpy as np
 from pynufft import NUFFT
 
-from ppfft.resampling.inverse_toeplitz import InverseToeplitz
+from ppfft.toeplitz.inverse_toeplitz import InverseToeplitz
 from ppfft.tools.pad import pad
 from ppfft.tools.new_fft import new_fft, new_ifft
 
@@ -135,7 +135,7 @@ def compute_cols(
     return alpha
 
 
-def onion_peeling(
+def onion_peeling_col(
     hori_ppfft, vert_ppfft, toeplitz_list, nufft_list, workers: int = None
 ):
     I_hat = initialize_I_hat(hori_ppfft, vert_ppfft)
@@ -163,3 +163,33 @@ def onion_peeling(
         )
 
     return fft_col
+
+
+def onion_peeling_row(
+    hori_ppfft, vert_ppfft, toeplitz_list, nufft_list, workers: int = None
+):
+    I_hat = initialize_I_hat(hori_ppfft, vert_ppfft)
+    n = hori_ppfft.shape[0] - 1
+
+    fft_row = np.zeros(shape=(n, n + 1), dtype=complex)
+    fft_row[:, 0] = new_ifft(I_hat[:, 0], workers=workers)[:-1]
+    fft_row[:, -1] = np.conjugate(fft_row[:, 0])
+    fft_row[:, n // 2] = new_ifft(I_hat[:, n // 2], workers=workers)[:-1]
+
+    for toeplitz_inv, NufftObj, k in zip(
+        toeplitz_list, nufft_list, range(-(n // 2) + 1, 0)
+    ):
+        indices = select_points(k, n)
+        vert_ppfft_samples = np.take(vert_ppfft[k + n // 2], indices)
+        hori_ppfft_samples = np.take(hori_ppfft[k + n // 2], indices)
+
+        fft_row[:, k + n // 2] = compute_cols(
+            k, I_hat, hori_ppfft_samples, toeplitz_inv, NufftObj, workers=workers
+        )
+        fft_row[:, -(k + n // 2) - 1] = np.conjugate(fft_row[:, k + n // 2])
+
+        compute_rows(
+            k, I_hat, vert_ppfft_samples, toeplitz_inv, NufftObj, workers=workers
+        )
+
+    return fft_row

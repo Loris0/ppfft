@@ -1,7 +1,7 @@
 import numpy as np
 
 from scipy.sparse.linalg import cg, LinearOperator
-from ..ppfft.ppfft import ppfft, adj_ppfft
+from ppfft.legacy.ppfft import ppfft, adj_ppfft
 
 
 def iterative_inverse(hori_y, vert_y, preconditioned=True, tol=1e-7):

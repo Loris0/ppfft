@@ -1,13 +1,13 @@
 import pytest
 import numpy as np
 
-from ppfft.inverse.fast_onion_peeling import (
+from ppfft.legacy.fast_onion_peeling import (
     fast_onion_peeling,
     precompute_onion_peeling,
 )
 from ppfft.tools.pad import pad
 from ppfft.tools.new_fft import new_fft2
-from ppfft.ppfft.ppfft import ppfft
+from ppfft.legacy.ppfft import ppfft
 
 
 def compute_true_Id(im):

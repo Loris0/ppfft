@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 
-from ppfft.ppfft.ppfft import ppfft
-from ppfft.inverse.iterative_inverse import iterative_inverse
+from ppfft.legacy.ppfft import ppfft
+from ppfft.legacy.iterative_inverse import iterative_inverse
 
 
 @pytest.mark.parametrize("n", [20, 30])

@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
 
-from ppfft.ppfft.ppfft import ppfft_horizontal, ppfft_vertical
-from ppfft.ppfft.ppfft import ppfft, adj_ppfft
+from ppfft.legacy.ppfft import ppfft_horizontal, ppfft_vertical, ppfft, adj_ppfft
 from ppfft.tools.grids import domain
 
 
@@ -67,7 +66,7 @@ def test_ppfft_vertical(n):
 
 
 @pytest.mark.parametrize("n", [100, 101])
-def test_adjoint_ppfft(n):
+def test_adj_ppfft(n):
     im1 = np.random.rand(n, n)
     im2 = np.random.rand(n + 1, 2 * n + 1)
     im3 = np.random.rand(n + 1, 2 * n + 1)

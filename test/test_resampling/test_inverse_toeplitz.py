@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from scipy.linalg import solve_toeplitz
 
-from ppfft.resampling.inverse_toeplitz import InverseToeplitz
+from ppfft.toeplitz.inverse_toeplitz import InverseToeplitz
 from pynufft import NUFFT
 
 

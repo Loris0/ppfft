@@ -9,7 +9,7 @@ from scipy.linalg import matmul_toeplitz
 from ppfft.tools.grids import domain
 
 
-def fast_frac_fft(x: np.ndarray, beta: float, m=None) -> np.ndarray:
+def frac_fft(x: np.ndarray, beta: float, m=None) -> np.ndarray:
     """Fast Fractional Fourier Transform.
 
     Parameters
@@ -45,6 +45,10 @@ def fast_frac_fft(x: np.ndarray, beta: float, m=None) -> np.ndarray:
         return w_powers_m * matmul_toeplitz((c, r), w_powers_n * x)
 
 
+def adj_frac_fft(y, beta, n=None):
+    return frac_fft(y, -beta, m=n)
+
+
 def new_fast_frac_fft(x: np.ndarray, beta: float, m=None) -> np.ndarray:
     n = len(x)
     w = np.exp(-2j * np.pi * beta)
@@ -60,41 +64,3 @@ def new_fast_frac_fft(x: np.ndarray, beta: float, m=None) -> np.ndarray:
     c = w ** (-0.5 * (dom_out - dom_in[0]) ** 2)
     r = w ** (-0.5 * (dom_in - dom_out[0]) ** 2)
     return w_powers_out * matmul_toeplitz((c, r), w_powers_in * x)
-
-
-def frac_fft_for_ppfft(x: np.ndarray, alpha: float) -> np.ndarray:
-    """Variant of FracFFT used in `ppfft`.
-
-    Parameters
-    ----------
-    x : np.ndarray
-        Input array, one dimensional.
-    alpha : float
-        Factor in the exponential (will be divided by input size).
-
-    Returns
-    -------
-    out : np.ndarray
-        FracFFT of input, at (input size) + 1 points.
-    """
-    n = len(x)
-    return fast_frac_fft(x, alpha / n, m=n + 1)
-
-
-def adj_frac_fft_for_ppfft(y: np.ndarray, alpha: float) -> np.ndarray:
-    """Adjoint of `frac_fft_for_ppfft`.
-
-    Parameters
-    ----------
-    y : np.ndarray
-        Input array, one dimensional.
-    alpha : float
-        Factor in the exponential (will be divided by (input size) - 1).
-
-    Returns
-    -------
-    out : np.ndarray
-        Adjoint FracFFT of input, of size (input size) - 1.
-    """
-    n = len(y) - 1
-    return fast_frac_fft(y, -alpha / n, m=n)

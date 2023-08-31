@@ -11,7 +11,7 @@ import numpy as np
 from ..tools.grids import domain
 from ..tools.pad import pad, adj_pad
 from ..tools.new_fft import new_fft, adj_new_fft
-from ..tools.frac_fft import fast_frac_fft, adj_frac_fft_for_ppfft
+from ..tools.frac_fft import frac_fft, adj_frac_fft
 
 
 def ppfft_horizontal(a: np.ndarray) -> np.ndarray:
@@ -24,7 +24,7 @@ def ppfft_horizontal(a: np.ndarray) -> np.ndarray:
 
     # Frac FFT on each col
     for k, col in zip(domain(n + 1), fft_col.T):
-        res[k + n // 2, :] = fast_frac_fft(col, beta=-2 * k / (n * (n + 1)), m=n + 1)
+        res[k + n // 2, :] = frac_fft(col, beta=-2 * k / (n * (n + 1)), m=n + 1)
     return res
 
 
@@ -86,9 +86,9 @@ def adj_ppfft(hori_ppfft: np.ndarray, vert_ppfft: np.ndarray) -> np.ndarray:
     vert_aux = np.empty(shape=(n, m), dtype=complex)
 
     for k, (col_h, col_v) in enumerate(zip(hori_ppfft.T, vert_ppfft.T)):
-        alpha = -2 * (k - n) / m
-        hori_aux[:, k] = adj_frac_fft_for_ppfft(col_h, alpha)
-        vert_aux[:, k] = adj_frac_fft_for_ppfft(col_v, alpha)
+        alpha = -2 * (k - n) / (n * m)
+        hori_aux[:, k] = adj_frac_fft(col_h, alpha, n=n)
+        vert_aux[:, k] = adj_frac_fft(col_v, alpha, n=n)
 
     hori_aux = adj_pad(adj_new_fft(hori_aux), (n, n))
     vert_aux = adj_pad(adj_new_fft(vert_aux), (n, n))

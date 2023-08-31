@@ -7,7 +7,7 @@ import numpy as np
 
 from ..tools.pad import pad
 from ..tools.new_fft import new_fft
-from ..resampling.inverse_toeplitz import InverseToeplitz
+from ..toeplitz.inverse_toeplitz import InverseToeplitz
 from pynufft import NUFFT
 
 

@@ -2,7 +2,7 @@ import numpy as np
 import scipy.fft as fft
 from pynufft import NUFFT
 
-from ppfft.resampling.inverse_toeplitz import InverseToeplitz
+from ppfft.toeplitz.inverse_toeplitz import InverseToeplitz
 
 
 def select_points(k: int, n: int) -> np.ndarray:

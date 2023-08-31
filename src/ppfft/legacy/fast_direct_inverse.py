@@ -6,7 +6,7 @@ import numpy as np
 
 from ..tools.pad import pad, adj_pad
 from ..tools.new_fft import adj_new_fft
-from ..resampling.inverse_toeplitz import InverseToeplitz
+from ..toeplitz.inverse_toeplitz import InverseToeplitz
 from .fast_onion_peeling import fast_onion_peeling, precompute_onion_peeling
 
 

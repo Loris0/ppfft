@@ -9,5 +9,6 @@ from ppfft.legacy.iterative_inverse import iterative_inverse
 def test_fast_direct_inverse(n):
     im = np.random.rand(n, n)
     h, v = ppfft(im)
+    sol, exit_status = iterative_inverse(h, v)
 
-    assert np.allclose(iterative_inverse(h, v)[0], im, atol=1e-7)
+    assert np.allclose(sol, im, atol=1e-7)

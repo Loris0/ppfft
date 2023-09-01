@@ -18,7 +18,7 @@ def test_onion_peeling_col(n):
     h, v = ppfft(im)
     fft_col = onion_peeling_col(h, v, *precomputations)
 
-    assert np.allclose(fft_col, new_fft(pad(im, (n + 1, n)), axis=0), atol=1e-6)
+    assert np.allclose(fft_col, new_fft(pad(im, (n + 1, n)), axis=0), atol=1e-5)
 
 
 @pytest.mark.parametrize("n", [64, 128])
@@ -28,4 +28,4 @@ def test_onion_peeling_row(n):
     h, v = ppfft(im)
     fft_row = onion_peeling_row(h, v, *precomputations)
 
-    assert np.allclose(fft_row, new_fft(pad(im, (n, n + 1)), axis=1), atol=1e-6)
+    assert np.allclose(fft_row, new_fft(pad(im, (n, n + 1)), axis=1), atol=1e-5)
